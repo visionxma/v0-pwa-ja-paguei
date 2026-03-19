@@ -30,11 +30,21 @@ export async function signup(formData: FormData) {
     redirect('/auth/error?error=Senhas não conferem')
   }
 
+  // Build redirect URL
+  let redirectUrl = 'http://localhost:3000/auth/callback'
+  if (process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL) {
+    redirectUrl = process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL
+  } else if (process.env.NEXT_PUBLIC_VERCEL_URL) {
+    redirectUrl = `https://${process.env.NEXT_PUBLIC_VERCEL_URL}/auth/callback`
+  } else if (process.env.VERCEL_URL) {
+    redirectUrl = `https://${process.env.VERCEL_URL}/auth/callback`
+  }
+
   const data = {
     email: formData.get('email') as string,
     password: password,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || process.env.NEXT_PUBLIC_VERCEL_URL ? 'https://' + process.env.NEXT_PUBLIC_VERCEL_URL : 'http://localhost:3000'}/auth/callback`,
+      emailRedirectTo: redirectUrl,
       data: {
         display_name: formData.get('email')?.toString().split('@')[0] || 'Usuário',
       },
