@@ -1,152 +1,125 @@
 'use client'
 
-import { Header } from '@/components/layout/header'
-import { BottomNav } from '@/components/layout/bottom-nav'
-import { Card } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { useAuth } from '@/hooks/use-auth'
-import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { AppShell } from '@/components/layout/app-shell'
+import { useTheme } from 'next-themes'
+import { useState } from 'react'
+import { Sun, Moon, Bell, Shield, Trash2, Lock, FileText, Scale } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
 
 export default function SettingsPage() {
-  const { user, loading } = useAuth()
-  const router = useRouter()
-  const [darkMode, setDarkMode] = useState(false)
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/auth/login')
-    }
-    // Check dark mode preference
-    if (typeof window !== 'undefined') {
-      setDarkMode(
-        localStorage.getItem('darkMode') === 'true' ||
-        window.matchMedia('(prefers-color-scheme: dark)').matches
-      )
-    }
-  }, [user, loading, router])
-
-  const handleDarkModeToggle = (enabled: boolean) => {
-    setDarkMode(enabled)
-    localStorage.setItem('darkMode', String(enabled))
-    if (enabled) {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    )
-  }
-
-  if (!user) return null
+  const { theme, setTheme } = useTheme()
+  const [notifications, setNotifications] = useState({
+    expenses: true,
+    payments: true,
+    invites: true,
+    reminders: false,
+  })
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      <Header />
-      
-      <main className="flex-1 overflow-y-auto pb-20">
-        <div className="max-w-2xl mx-auto p-4 space-y-6">
-          {/* Header */}
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Configurações
-          </h1>
-
-          {/* Appearance Settings */}
-          <Card className="p-6 border border-gray-200 dark:border-gray-800">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+    <AppShell title="Configurações" subtitle="Personalize sua experiência">
+      <div className="space-y-6 max-w-2xl mx-auto">
+        {/* Appearance */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sun className="h-5 w-5 text-primary" />
               Aparência
-            </h2>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">Modo Escuro</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Ativa o tema escuro da aplicação
-                  </p>
-                </div>
-                <button
-                  onClick={() => handleDarkModeToggle(!darkMode)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    darkMode ? 'bg-primary' : 'bg-gray-300'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      darkMode ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
+            </CardTitle>
+            <CardDescription>Personalize a interface do aplicativo</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <p className="font-medium text-foreground">Modo Escuro</p>
+                <p className="text-sm text-muted-foreground">Ativa o tema escuro da aplicação</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Sun className="h-4 w-4 text-muted-foreground" />
+                <Switch
+                  checked={theme === 'dark'}
+                  onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+                />
+                <Moon className="h-4 w-4 text-muted-foreground" />
               </div>
             </div>
-          </Card>
+          </CardContent>
+        </Card>
 
-          {/* Notification Settings */}
-          <Card className="p-6 border border-gray-200 dark:border-gray-800">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        {/* Notifications */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5 text-primary" />
               Notificações
-            </h2>
-            <div className="space-y-3">
-              {[
-                { label: 'Despesas adicionadas', description: 'Notifique quando uma despesa for adicionada' },
-                { label: 'Pagamentos recebidos', description: 'Notifique quando você receber um pagamento' },
-                { label: 'Convites de grupo', description: 'Notifique sobre convites para grupos' },
-              ].map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white">{item.label}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {item.description}
-                    </p>
-                  </div>
-                  <button
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors bg-primary`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform translate-x-6`}
-                    />
-                  </button>
+            </CardTitle>
+            <CardDescription>Gerencie suas preferências de notificação</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {[
+              { key: 'expenses', label: 'Despesas adicionadas', description: 'Quando uma despesa for criada no grupo' },
+              { key: 'payments', label: 'Pagamentos recebidos', description: 'Quando você receber um pagamento' },
+              { key: 'invites', label: 'Convites de grupo', description: 'Quando for convidado para um grupo' },
+              { key: 'reminders', label: 'Lembretes de vencimento', description: 'Antes de uma conta vencer' },
+            ].map((item) => (
+              <div key={item.key} className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <p className="font-medium text-foreground">{item.label}</p>
+                  <p className="text-sm text-muted-foreground">{item.description}</p>
                 </div>
-              ))}
-            </div>
-          </Card>
+                <Switch
+                  checked={notifications[item.key as keyof typeof notifications]}
+                  onCheckedChange={(checked) => 
+                    setNotifications(prev => ({ ...prev, [item.key]: checked }))
+                  }
+                />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
 
-          {/* Privacy Settings */}
-          <Card className="p-6 border border-gray-200 dark:border-gray-800">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Privacidade
-            </h2>
-            <div className="space-y-3">
-              <Button variant="outline" className="w-full justify-start">
-                🔐 Mudar Senha
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                📋 Política de Privacidade
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                ⚖️ Termos de Serviço
-              </Button>
-            </div>
-          </Card>
-
-          {/* Danger Zone */}
-          <Card className="p-6 border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/10">
-            <h2 className="text-lg font-semibold text-red-600 dark:text-red-400 mb-4">
-              Zona de Perigo
-            </h2>
-            <Button variant="outline" className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20">
-              🗑️ Deletar Conta
+        {/* Privacy & Security */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-primary" />
+              Privacidade e Segurança
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Button variant="ghost" className="w-full justify-start gap-3 h-12">
+              <Lock className="h-5 w-5 text-muted-foreground" />
+              <span>Alterar Senha</span>
             </Button>
-          </Card>
-        </div>
-      </main>
+            <Button variant="ghost" className="w-full justify-start gap-3 h-12">
+              <FileText className="h-5 w-5 text-muted-foreground" />
+              <span>Política de Privacidade</span>
+            </Button>
+            <Button variant="ghost" className="w-full justify-start gap-3 h-12">
+              <Scale className="h-5 w-5 text-muted-foreground" />
+              <span>Termos de Serviço</span>
+            </Button>
+          </CardContent>
+        </Card>
 
-      <BottomNav />
-    </div>
+        {/* Danger Zone */}
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="h-5 w-5" />
+              Zona de Perigo
+            </CardTitle>
+            <CardDescription>Ações irreversíveis para sua conta</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="outline" className="w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30">
+              <Trash2 className="h-5 w-5" />
+              <span>Excluir minha conta permanentemente</span>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </AppShell>
   )
 }

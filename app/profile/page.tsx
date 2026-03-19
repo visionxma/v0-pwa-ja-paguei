@@ -1,105 +1,187 @@
 'use client'
 
-import { Header } from '@/components/layout/header'
-import { BottomNav } from '@/components/layout/bottom-nav'
-import { Card } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { AppShell } from '@/components/layout/app-shell'
 import { useAuth } from '@/hooks/use-auth'
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { useState, useEffect } from 'react'
+import { User, Mail, Calendar, Camera, Save, Loader2 } from 'lucide-react'
 
 export default function ProfilePage() {
-  const { user, loading } = useAuth()
-  const router = useRouter()
+  const { user } = useAuth()
+  const supabase = createClient()
+  const [profile, setProfile] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [displayName, setDisplayName] = useState('')
+  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/auth/login')
-    }
-  }, [user, loading, router])
+    async function loadProfile() {
+      if (!user) return
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    )
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single()
+
+      if (data) {
+        setProfile(data)
+        setDisplayName(data.display_name || '')
+      }
+      setLoading(false)
+    }
+
+    loadProfile()
+  }, [user, supabase])
+
+  const handleSave = async () => {
+    if (!user) return
+
+    setSaving(true)
+    setMessage(null)
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ display_name: displayName })
+      .eq('user_id', user.id)
+
+    if (error) {
+      setMessage({ type: 'error', text: 'Erro ao salvar perfil' })
+    } else {
+      setMessage({ type: 'success', text: 'Perfil atualizado com sucesso!' })
+      setProfile((prev: any) => ({ ...prev, display_name: displayName }))
+    }
+
+    setSaving(false)
   }
 
-  if (!user) return null
-
-  const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Usuário'
+  const initials = (profile?.display_name || user?.email?.split('@')[0] || 'U')
+    .substring(0, 2)
+    .toUpperCase()
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      <Header />
-      
-      <main className="flex-1 overflow-y-auto pb-20">
-        <div className="max-w-2xl mx-auto p-4 space-y-6">
-          {/* Header */}
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Meu Perfil
-          </h1>
-
-          {/* Profile Card */}
-          <Card className="p-6 border border-gray-200 dark:border-gray-800">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center font-bold text-2xl">
-                {displayName.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {displayName}
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {user?.email}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                  Membro desde {new Date(user?.created_at || '').toLocaleDateString('pt-BR')}
-                </p>
-              </div>
-            </div>
-
-            <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-              <h2 className="font-semibold text-gray-900 dark:text-white mb-4">
-                Informações
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-sm text-gray-600 dark:text-gray-400">
-                    Nome
-                  </Label>
-                  <p className="mt-1 text-gray-900 dark:text-white">
-                    {displayName}
-                  </p>
+    <AppShell title="Perfil" subtitle="Gerencie suas informações">
+      <div className="space-y-6 max-w-2xl mx-auto">
+        {/* Profile Header */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col sm:flex-row items-center gap-6">
+              <div className="relative">
+                <div className="w-24 h-24 rounded-full bg-primary flex items-center justify-center">
+                  <span className="text-primary-foreground font-bold text-3xl">{initials}</span>
                 </div>
-                <div>
-                  <Label className="text-sm text-gray-600 dark:text-gray-400">
-                    Email
-                  </Label>
-                  <p className="mt-1 text-gray-900 dark:text-white break-all">
-                    {user?.email}
-                  </p>
+                <button className="absolute bottom-0 right-0 w-8 h-8 bg-secondary rounded-full flex items-center justify-center shadow-lg hover:bg-secondary/80 transition-colors">
+                  <Camera className="h-4 w-4 text-secondary-foreground" />
+                </button>
+              </div>
+              <div className="text-center sm:text-left">
+                <h2 className="text-2xl font-bold text-foreground">
+                  {profile?.display_name || user?.email?.split('@')[0] || 'Usuário'}
+                </h2>
+                <p className="text-muted-foreground">{user?.email}</p>
+                <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground justify-center sm:justify-start">
+                  <Calendar className="h-4 w-4" />
+                  <span>Membro desde {new Date(user?.created_at || '').toLocaleDateString('pt-BR')}</span>
                 </div>
               </div>
             </div>
-          </Card>
+          </CardContent>
+        </Card>
 
-          {/* Actions */}
-          <div className="space-y-2">
-            <Button variant="outline" className="w-full justify-start">
-              ✏️ Editar Perfil
-            </Button>
-            <Button variant="outline" className="w-full justify-start text-red-600 hover:text-red-700">
-              🔐 Mudar Senha
-            </Button>
-          </div>
-        </div>
-      </main>
+        {/* Edit Profile */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5 text-primary" />
+              Informações Pessoais
+            </CardTitle>
+            <CardDescription>Atualize suas informações de perfil</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="displayName">Nome de exibição</Label>
+                  <Input
+                    id="displayName"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="Seu nome"
+                    className="h-11"
+                  />
+                </div>
 
-      <BottomNav />
-    </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-foreground">{user?.email}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    O email não pode ser alterado
+                  </p>
+                </div>
+
+                {message && (
+                  <p className={`text-sm ${message.type === 'error' ? 'text-destructive' : 'text-green-600'}`}>
+                    {message.text}
+                  </p>
+                )}
+
+                <Button 
+                  onClick={handleSave} 
+                  disabled={saving || displayName === profile?.display_name}
+                  className="w-full gap-2"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4" />
+                      Salvar alterações
+                    </>
+                  )}
+                </Button>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Stats */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Estatísticas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="p-4 bg-muted rounded-lg">
+                <p className="text-2xl font-bold text-foreground">0</p>
+                <p className="text-sm text-muted-foreground">Despesas</p>
+              </div>
+              <div className="p-4 bg-muted rounded-lg">
+                <p className="text-2xl font-bold text-foreground">0</p>
+                <p className="text-sm text-muted-foreground">Grupos</p>
+              </div>
+              <div className="p-4 bg-muted rounded-lg">
+                <p className="text-2xl font-bold text-foreground">0</p>
+                <p className="text-sm text-muted-foreground">Amigos</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </AppShell>
   )
 }

@@ -1,70 +1,110 @@
 'use client'
 
-import { Header } from '@/components/layout/header'
-import { BottomNav } from '@/components/layout/bottom-nav'
-import { Card } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import Link from 'next/link'
+import { AppShell } from '@/components/layout/app-shell'
 import { useAuth } from '@/hooks/use-auth'
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { Plus, Users, Settings, ArrowRight } from 'lucide-react'
 
 export default function GroupsPage() {
-  const { user, loading } = useAuth()
-  const router = useRouter()
+  const { user } = useAuth()
+  const supabase = createClient()
+  const [groups, setGroups] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/auth/login')
+    async function loadGroups() {
+      if (!user) return
+      
+      const { data: memberships } = await supabase
+        .from('group_members')
+        .select('group_id, role, groups(*)')
+        .eq('user_id', user.id)
+
+      const groupsData = memberships?.map(m => ({
+        ...m.groups,
+        role: m.role
+      })) || []
+      
+      setGroups(groupsData)
+      setLoading(false)
     }
-  }, [user, loading, router])
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    )
-  }
-
-  if (!user) return null
+    loadGroups()
+  }, [user, supabase])
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      <Header />
-      
-      <main className="flex-1 overflow-y-auto pb-20">
-        <div className="max-w-4xl mx-auto p-4 space-y-6">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Meus Grupos
-            </h1>
-            <Link href="/groups/new">
-              <Button className="bg-primary hover:bg-red-700">
-                + Novo Grupo
-              </Button>
-            </Link>
-          </div>
-
-          {/* Empty State */}
-          <Card className="p-12 text-center border-dashed border-2">
-            <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">
-              👥 Nenhum grupo criado ainda
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-500 mb-6">
-              Crie um grupo para começar a dividir despesas com seus amigos
-            </p>
-            <Link href="/groups/new">
-              <Button className="bg-primary hover:bg-red-700">
-                Criar Primeiro Grupo
-              </Button>
-            </Link>
-          </Card>
+    <AppShell title="Grupos" subtitle="Gerencie seus grupos e membros">
+      <div className="space-y-6 max-w-6xl mx-auto">
+        {/* Actions bar */}
+        <div className="flex justify-end">
+          <Link href="/groups/new">
+            <Button className="bg-primary hover:bg-primary/90 gap-2">
+              <Plus className="h-4 w-4" />
+              Novo Grupo
+            </Button>
+          </Link>
         </div>
-      </main>
 
-      <BottomNav />
-    </div>
+        {/* Groups list */}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : groups.length === 0 ? (
+          <Card className="border-2 border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <Users className="h-16 w-16 text-muted-foreground/50 mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">Nenhum grupo ainda</h3>
+              <p className="text-muted-foreground text-center mb-6 max-w-sm">
+                Crie um grupo para começar a dividir despesas com amigos, família ou colegas.
+              </p>
+              <Link href="/groups/new">
+                <Button className="bg-primary hover:bg-primary/90 gap-2">
+                  <Plus className="h-4 w-4" />
+                  Criar primeiro grupo
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {groups.map((group) => (
+              <Card key={group.id} className="hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <Users className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg">{group.name}</CardTitle>
+                        <CardDescription className="text-xs capitalize">{group.role}</CardDescription>
+                      </div>
+                    </div>
+                    {group.role === 'admin' && (
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Settings className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                    {group.description || 'Sem descrição'}
+                  </p>
+                  <Button variant="outline" className="w-full gap-2" size="sm">
+                    Ver grupo <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+    </AppShell>
   )
 }

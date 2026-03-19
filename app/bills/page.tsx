@@ -1,70 +1,165 @@
 'use client'
 
-import { Header } from '@/components/layout/header'
-import { BottomNav } from '@/components/layout/bottom-nav'
-import { Card } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import Link from 'next/link'
+import { AppShell } from '@/components/layout/app-shell'
 import { useAuth } from '@/hooks/use-auth'
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { Plus, Receipt, Calendar, Filter, Search } from 'lucide-react'
+import { Input } from '@/components/ui/input'
 
 export default function BillsPage() {
-  const { user, loading } = useAuth()
-  const router = useRouter()
+  const { user } = useAuth()
+  const supabase = createClient()
+  const [bills, setBills] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState('all')
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/auth/login')
+    async function loadBills() {
+      if (!user) return
+      
+      const query = supabase
+        .from('bills')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (filter === 'pending') {
+        query.eq('status', 'pendente')
+      } else if (filter === 'paid') {
+        query.eq('status', 'pago')
+      }
+
+      const { data } = await query
+      setBills(data || [])
+      setLoading(false)
     }
-  }, [user, loading, router])
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    )
-  }
-
-  if (!user) return null
+    loadBills()
+  }, [user, supabase, filter])
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      <Header />
-      
-      <main className="flex-1 overflow-y-auto pb-20">
-        <div className="max-w-4xl mx-auto p-4 space-y-6">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Minhas Despesas
-            </h1>
-            <Link href="/bills/new">
-              <Button className="bg-primary hover:bg-red-700">
-                + Nova Despesa
-              </Button>
-            </Link>
+    <AppShell title="Despesas" subtitle="Gerencie suas contas e pagamentos">
+      <div className="space-y-6 max-w-6xl mx-auto">
+        {/* Actions bar */}
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <div className="flex gap-2">
+            <Button
+              variant={filter === 'all' ? 'default' : 'outline'}
+              onClick={() => setFilter('all')}
+              size="sm"
+            >
+              Todas
+            </Button>
+            <Button
+              variant={filter === 'pending' ? 'default' : 'outline'}
+              onClick={() => setFilter('pending')}
+              size="sm"
+            >
+              Pendentes
+            </Button>
+            <Button
+              variant={filter === 'paid' ? 'default' : 'outline'}
+              onClick={() => setFilter('paid')}
+              size="sm"
+            >
+              Pagas
+            </Button>
           </div>
-
-          {/* Empty State */}
-          <Card className="p-12 text-center border-dashed border-2">
-            <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">
-              📭 Nenhuma despesa registrada ainda
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-500 mb-6">
-              Crie sua primeira despesa clicando no botão acima
-            </p>
-            <Link href="/bills/new">
-              <Button className="bg-primary hover:bg-red-700">
-                Criar Primeira Despesa
-              </Button>
-            </Link>
-          </Card>
+          <Link href="/bills/new">
+            <Button className="bg-primary hover:bg-primary/90 gap-2">
+              <Plus className="h-4 w-4" />
+              Nova Despesa
+            </Button>
+          </Link>
         </div>
-      </main>
 
-      <BottomNav />
-    </div>
+        {/* Bills list */}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : bills.length === 0 ? (
+          <Card className="border-2 border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <Receipt className="h-16 w-16 text-muted-foreground/50 mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">Nenhuma despesa encontrada</h3>
+              <p className="text-muted-foreground text-center mb-6 max-w-sm">
+                {filter !== 'all' 
+                  ? 'Não há despesas com esse filtro. Tente outro filtro ou crie uma nova despesa.'
+                  : 'Comece registrando sua primeira despesa para acompanhar seus gastos.'}
+              </p>
+              <Link href="/bills/new">
+                <Button className="bg-primary hover:bg-primary/90 gap-2">
+                  <Plus className="h-4 w-4" />
+                  Criar primeira despesa
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/50">
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Descrição</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Categoria</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Vencimento</th>
+                      <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Valor</th>
+                      <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
+                      <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {bills.map((bill) => (
+                      <tr key={bill.id} className="border-b border-border hover:bg-muted/30 transition-colors">
+                        <td className="py-4 px-4">
+                          <span className="font-medium text-foreground">{bill.description}</span>
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className="text-muted-foreground capitalize">{bill.category || 'Geral'}</span>
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Calendar className="h-4 w-4" />
+                            {bill.due_date ? new Date(bill.due_date).toLocaleDateString('pt-BR') : '-'}
+                          </div>
+                        </td>
+                        <td className="py-4 px-4 text-right">
+                          <span className="font-semibold text-foreground">
+                            R$ {Number(bill.amount).toFixed(2)}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 text-center">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            bill.status === 'pago' 
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                              : bill.status === 'vencido'
+                              ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                              : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
+                          }`}>
+                            {bill.status === 'pago' ? 'Pago' : bill.status === 'vencido' ? 'Vencido' : 'Pendente'}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 text-center">
+                          <Button variant="ghost" size="sm">
+                            Ver
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </AppShell>
   )
 }
