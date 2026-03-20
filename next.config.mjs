@@ -6,7 +6,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  reactCompiler: true,
+  // reactCompiler disabled — causes Turbopack crash on Windows
+  // reactCompiler: true,
   headers: async () => {
     return [
       {

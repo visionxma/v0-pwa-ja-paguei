@@ -33,7 +33,13 @@ export async function GET(request: NextRequest) {
     if (!error) {
       return NextResponse.redirect(new URL(next, request.url))
     }
+
+    const errorUrl = new URL('/auth/error', request.url)
+    errorUrl.searchParams.set('error', 'Não foi possível confirmar sua conta. Tente fazer login ou criar uma nova conta.')
+    return NextResponse.redirect(errorUrl)
   }
 
-  return NextResponse.redirect(new URL('/auth/error', request.url))
+  const errorUrl = new URL('/auth/error', request.url)
+  errorUrl.searchParams.set('error', 'Link de confirmação inválido ou expirado.')
+  return NextResponse.redirect(errorUrl)
 }

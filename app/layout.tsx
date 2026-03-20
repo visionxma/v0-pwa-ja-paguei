@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/theme-provider'
 import { ServiceWorkerRegister } from '@/components/service-worker-register'
+import { Toaster } from 'sonner'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -60,19 +61,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Já Paguei" />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                const darkMode = localStorage.getItem('darkMode');
-                const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                if (darkMode === 'true' || (darkMode === null && systemDark)) {
-                  document.documentElement.classList.add('dark');
-                }
-              } catch (e) {}
-            `,
-          }}
-        />
+        {/* Theme is managed by next-themes ThemeProvider */}
       </head>
       <body className="font-sans antialiased bg-background text-foreground">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
@@ -80,6 +69,7 @@ export default function RootLayout({
           <div className="flex flex-col h-screen">
             {children}
           </div>
+          <Toaster position="top-center" richColors closeButton />
           <Analytics />
         </ThemeProvider>
       </body>

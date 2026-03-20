@@ -78,6 +78,16 @@ export interface BudgetGoal {
   updated_at: string
 }
 
+export interface BillAttachment {
+  id: string
+  bill_id: string
+  uploaded_by: string
+  file_url: string
+  file_name: string
+  file_type: string | null
+  created_at: string
+}
+
 export interface UserPreference {
   id: string
   user_id: string

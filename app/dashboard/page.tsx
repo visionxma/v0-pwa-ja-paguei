@@ -1,20 +1,19 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Header } from '@/components/layout/header'
-import { BottomNav } from '@/components/layout/bottom-nav'
+import { AppLayout } from '@/components/layout/app-layout'
 import { DashboardStats } from '@/components/dashboard/dashboard-stats'
 import { RecentBills } from '@/components/dashboard/recent-bills'
 import { QuickActions } from '@/components/dashboard/quick-actions'
 import { useAuth } from '@/hooks/use-auth'
+import { fetchDashboardStats } from '@/lib/supabase/database'
+import { ArrowRight } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import Link from 'next/link'
+import DarkVeil from '@/components/effects/DarkVeil/DarkVeil'
 
 export default function DashboardPage() {
-  const { user, loading } = useAuth()
-  const router = useRouter()
+  const { user } = useAuth()
   const [stats, setStats] = useState({
     totalExpenses: 0,
     pendingPayments: 0,
@@ -22,62 +21,83 @@ export default function DashboardPage() {
   })
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/auth/login')
-    }
-  }, [user, loading, router])
+    if (!user) return
+    fetchDashboardStats(user.id)
+      .then(setStats)
+      .catch(console.error)
+  }, [user])
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    )
-  }
-
-  if (!user) return null
+  const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Usuario'
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      <Header />
-      
-      <main className="flex-1 overflow-y-auto pb-20">
-        <div className="max-w-4xl mx-auto p-4 space-y-6">
-          {/* Welcome Section */}
-          <div className="bg-gradient-to-r from-primary to-red-700 rounded-lg p-6 text-white shadow-lg">
-            <h1 className="text-3xl font-bold mb-2">Bem-vindo!</h1>
-            <p className="text-red-100">
-              Aqui você gerencia suas despesas e divide contas com amigos
-            </p>
+    <AppLayout>
+      <div className="space-y-5 ios-stagger">
+        {/* Welcome Banner */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/85 to-primary/60 rounded-[24px] p-6 md:p-7 text-white shadow-xl shadow-primary/20 transform-gpu translate-z-0">
+          <div className="absolute inset-0 pointer-events-none z-0 mix-blend-overlay opacity-[0.85]">
+            <DarkVeil
+              hueShift={0}
+              noiseIntensity={0.08}
+              scanlineIntensity={0.25}
+              speed={0.6}
+              scanlineFrequency={0.02}
+              warpAmount={0.8}
+              resolutionScale={1}
+            />
           </div>
 
-          {/* Quick Actions */}
-          <QuickActions />
+          <div className="relative z-10">
+            {/* Decorative (Preservando as originais que funcionam bem em mobile) */}
+            <div className="absolute -top-12 -right-12 w-44 h-44 rounded-full bg-white/8 pointer-events-none" />
+            <div className="absolute -bottom-8 -left-8 w-36 h-36 rounded-full bg-white/5 pointer-events-none" />
+            <div className="absolute top-6 right-24 w-2 h-2 rounded-full bg-white/20 float-gentle pointer-events-none" />
+            <div
+              className="absolute bottom-10 right-16 w-1.5 h-1.5 rounded-full bg-white/10 float-gentle pointer-events-none"
+              style={{ animationDelay: '1.5s' }}
+            />
 
-          {/* Stats */}
-          <DashboardStats stats={stats} />
+            <div className="relative">
+              {/* Badge SUA CONTA coeso e igual ao desktop */}
+              <div className="inline-flex items-center justify-center px-4 py-1.5 mb-3 rounded-[12px] md:rounded-full border border-white/20 bg-white/10 backdrop-blur-md shadow-sm">
+                <span className="text-[10px] md:text-[11px] font-bold uppercase tracking-[0.15em] text-white">
+                  SUA CONTA
+                </span>
+              </div>
+              
+              <h1 className="text-[22px] md:text-[26px] font-bold tracking-tight leading-none mb-2 drop-shadow-sm">
+                Ola, {displayName}
+              </h1>
+              <p className="text-white/85 text-[13.5px] md:text-[14px] max-w-sm leading-relaxed drop-shadow-sm">
+                Gerencie despesas e divida contas com amigos.
+              </p>
+            </div>
+          </div>
+        </div>
 
-          {/* Recent Bills */}
-          <RecentBills />
+        <QuickActions />
+        <DashboardStats stats={stats} />
+        <RecentBills />
 
-          {/* Empty State Help */}
-          <Card className="p-6 text-center border-dashed border-2">
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              Comece a usar criando uma nova despesa ou grupo
-            </p>
-            <div className="flex gap-2 justify-center flex-wrap">
-              <Button className="bg-primary hover:bg-red-700">
+        {/* CTA */}
+        <div className="ios-card p-6 text-center ios-card-hover">
+          <p className="text-muted-foreground text-[14px] mb-4">
+            Comece criando uma nova despesa ou grupo
+          </p>
+          <div className="flex gap-3 justify-center flex-wrap">
+            <Link href="/bills/new">
+              <Button className="bg-gradient-to-r from-primary to-primary/85 text-white shadow-lg shadow-primary/20 rounded-[14px] h-10 px-5 text-[14px] font-semibold gap-2 ios-press hover:shadow-xl hover:shadow-primary/30 transition-all duration-500">
                 Nova Despesa
+                <ArrowRight className="w-4 h-4" />
               </Button>
-              <Button variant="outline">
+            </Link>
+            <Link href="/groups/new">
+              <Button variant="outline" className="rounded-[14px] h-10 px-5 text-[14px] font-medium ios-press hover:bg-muted/50 transition-all duration-300">
                 Criar Grupo
               </Button>
-            </div>
-          </Card>
+            </Link>
+          </div>
         </div>
-      </main>
-
-      <BottomNav />
-    </div>
+      </div>
+    </AppLayout>
   )
 }

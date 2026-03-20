@@ -1,105 +1,103 @@
 'use client'
 
-import { Header } from '@/components/layout/header'
-import { BottomNav } from '@/components/layout/bottom-nav'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { useEffect, useState } from 'react'
+import { AppLayout } from '@/components/layout/app-layout'
 import { useAuth } from '@/hooks/use-auth'
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { fetchHistory } from '@/lib/supabase/database'
+import { History, Loader2 } from 'lucide-react'
+
+type FilterType = 'all' | 'paid' | 'pending'
+
+const tabs: { label: string; value: FilterType }[] = [
+  { label: 'Tudo', value: 'all' },
+  { label: 'Pago', value: 'paid' },
+  { label: 'Pendente', value: 'pending' },
+]
 
 export default function HistoryPage() {
-  const { user, loading } = useAuth()
-  const router = useRouter()
+  const { user } = useAuth()
+  const [filter, setFilter] = useState<FilterType>('all')
+  const [transactions, setTransactions] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/auth/login')
-    }
-  }, [user, loading, router])
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    )
-  }
-
-  if (!user) return null
-
-  const transactions = [
-    // Placeholder - será preenchido com dados reais
-  ]
+    if (!user) return
+    setLoading(true)
+    fetchHistory(user.id, filter)
+      .then(setTransactions)
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [user, filter])
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      <Header />
-      
-      <main className="flex-1 overflow-y-auto pb-20">
-        <div className="max-w-4xl mx-auto p-4 space-y-6">
-          {/* Header */}
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Histórico
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">
-              Todas as suas transações e pagamentos
+    <AppLayout>
+      <div className="space-y-5 ios-stagger">
+        <div>
+          <h1 className="text-[22px] font-bold text-foreground tracking-tight">Historico</h1>
+          <p className="text-[13px] text-muted-foreground mt-0.5">Todas as suas transacoes</p>
+        </div>
+
+        {/* iOS Segmented Control */}
+        <div className="ios-card p-1 flex gap-0.5">
+          {tabs.map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => setFilter(tab.value)}
+              className={`flex-1 py-2 rounded-[12px] text-[13px] font-semibold transition-all duration-300 ios-press ${
+                filter === tab.value
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {loading ? (
+          <div className="ios-card p-10 text-center">
+            <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
+          </div>
+        ) : transactions.length === 0 ? (
+          <div className="ios-card p-10 text-center ios-card-hover">
+            <div className="w-16 h-16 rounded-[20px] bg-muted flex items-center justify-center mx-auto mb-4">
+              <History className="w-7 h-7 text-muted-foreground" />
+            </div>
+            <p className="text-[16px] font-semibold text-foreground mb-1">Nenhuma transacao</p>
+            <p className="text-[13px] text-muted-foreground">
+              {filter === 'all'
+                ? 'Suas transacoes aparecerao aqui'
+                : filter === 'paid'
+                ? 'Nenhuma despesa paga'
+                : 'Nenhuma despesa pendente'}
             </p>
           </div>
-
-          {/* Filters */}
-          <Card className="p-4 border border-gray-200 dark:border-gray-800">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <Button variant="outline" className="w-full">
-                Tudo
-              </Button>
-              <Button variant="outline" className="w-full">
-                Recebido
-              </Button>
-              <Button variant="outline" className="w-full">
-                Pago
-              </Button>
-            </div>
-          </Card>
-
-          {/* Transactions List */}
-          {transactions.length === 0 ? (
-            <Card className="p-12 text-center border-dashed border-2">
-              <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">
-                📭 Nenhuma transação encontrada
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-500">
-                Suas transações aparecerão aqui
-              </p>
-            </Card>
-          ) : (
-            <Card className="overflow-hidden border border-gray-200 dark:border-gray-800">
-              <div className="divide-y divide-gray-200 dark:divide-gray-800">
-                {transactions.map((tx: any) => (
-                  <div key={tx.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-800">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold text-gray-900 dark:text-white">
-                          {tx.description}
-                        </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {new Date(tx.date).toLocaleDateString('pt-BR')}
-                        </p>
-                      </div>
-                      <p className={`font-bold ${tx.type === 'in' ? 'text-green-600' : 'text-red-600'}`}>
-                        {tx.type === 'in' ? '+' : '-'} R$ {Math.abs(tx.amount).toFixed(2)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+        ) : (
+          <div className="ios-group">
+            {transactions.map((tx) => (
+              <div key={tx.id} className="ios-group-item ios-press hover:bg-muted/30 transition-colors">
+                <div className="flex-1 min-w-0">
+                  <p className={`font-semibold text-[14px] ${tx.status === 'pago' ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
+                    {tx.description}
+                  </p>
+                  <p className="text-[12px] text-muted-foreground">
+                    {tx.groups?.name || 'Pessoal'}
+                    {tx.due_date && ` • ${new Date(tx.due_date).toLocaleDateString('pt-BR')}`}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className={`font-bold text-[14px] ${tx.status === 'pago' ? 'text-emerald-600' : 'text-foreground'}`}>
+                    R$ {Number(tx.amount).toFixed(2)}
+                  </p>
+                  <span className={`text-[11px] font-semibold ${tx.status === 'pago' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                    {tx.status === 'pago' ? 'Pago' : 'Pendente'}
+                  </span>
+                </div>
               </div>
-            </Card>
-          )}
-        </div>
-      </main>
-
-      <BottomNav />
-    </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </AppLayout>
   )
 }

@@ -16,27 +16,16 @@ export default function SignUpSuccessPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             Conta Criada!
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-2">
-            Verifique seu email para confirmar sua conta.
-          </p>
-          <p className="text-sm text-gray-500 dark:text-gray-500 mb-6">
-            Um link de confirmação foi enviado para você. Clique no link para ativar sua conta.
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            Sua conta foi criada com sucesso.
           </p>
 
           {/* Actions */}
-          <div className="space-y-3">
-            <Link href="/auth/login">
-              <Button className="w-full bg-primary hover:bg-red-700 text-white font-semibold">
-                Voltar para Login
-              </Button>
-            </Link>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Não recebeu o email?{' '}
-              <button className="text-primary hover:underline font-semibold">
-                Reenviar
-              </button>
-            </p>
-          </div>
+          <Link href="/dashboard">
+            <Button className="w-full bg-primary hover:bg-red-700 text-white font-semibold">
+              Ir para o Dashboard
+            </Button>
+          </Link>
         </div>
       </Card>
     </div>
