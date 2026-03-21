@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
-import { logout } from '@/app/auth/actions'
+import { logoutClient } from '@/lib/supabase/auth-client'
 import {
   LayoutDashboard,
   Receipt,
@@ -22,9 +22,9 @@ const navItems = [
   { href: '/bills', label: 'Despesas', icon: Receipt },
   { href: '/groups', label: 'Grupos', icon: Users },
   { href: '/friends', label: 'Amigos', icon: UserPlus },
-  { href: '/history', label: 'Historico', icon: History },
+  { href: '/history', label: 'Histórico', icon: History },
   { href: '/profile', label: 'Perfil', icon: User },
-  { href: '/settings', label: 'Configuracoes', icon: Settings },
+  { href: '/settings', label: 'Configurações', icon: Settings },
 ]
 
 export function AppSidebar() {
@@ -46,7 +46,7 @@ export function AppSidebar() {
             <DollarSign className="w-5 h-5 text-white" />
           </div>
           <div>
-            <span className="font-semibold text-[17px] text-sidebar-foreground tracking-tight">Ja Paguei</span>
+            <span className="font-semibold text-[17px] text-sidebar-foreground tracking-tight">Já Paguei</span>
             <p className="text-[11px] text-sidebar-foreground/35 font-medium tracking-wide">DIVISOR DE DESPESAS</p>
           </div>
         </Link>
@@ -94,7 +94,7 @@ export function AppSidebar() {
           </div>
         </div>
         <button
-          onClick={() => logout()}
+          onClick={() => logoutClient().then(() => { window.location.href = '/auth/login' })}
           className="flex items-center gap-2.5 w-full mt-2 px-3 py-2 rounded-[12px] text-[13px] text-sidebar-foreground/40 hover:bg-red-500/10 hover:text-red-400 transition-all duration-300 ios-press"
         >
           <LogOut className="w-4 h-4" />

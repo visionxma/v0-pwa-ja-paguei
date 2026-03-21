@@ -111,6 +111,74 @@ Para usar emails customizados:
 - Verifique se o arquivo `/public/sw.js` existe
 - Limpe o cache do navegador
 
+## 📱 Build Android (APK / AAB)
+
+### Pré-requisitos
+- Android Studio instalado (com SDK e emulador configurados)
+- Java 17+ no PATH
+- Dispositivo físico ou emulador ativo
+
+### Dev Client (Live Reload no dispositivo)
+
+Equivalente ao Expo Dev Client — o app abre no celular e reflete as alterações em tempo real:
+
+```bash
+pnpm dev:device
+```
+
+> O Capacitor sobe o servidor Next.js em dev mode e conecta o dispositivo via rede local. Certifique-se que o celular e o PC estão na mesma rede Wi-Fi.
+
+### Gerar APK (instalação direta)
+
+```bash
+pnpm build:apk
+```
+
+O APK gerado estará em:
+```
+android/app/build/outputs/apk/release/app-release.apk
+```
+
+### Gerar AAB (Google Play Store)
+
+```bash
+pnpm build:aab
+```
+
+O AAB gerado estará em:
+```
+android/app/build/outputs/bundle/release/app-release.aab
+```
+
+### Build manual (passo a passo)
+
+```bash
+# 1. Build do Next.js para Capacitor (gera pasta /out)
+pnpm build:app
+
+# 2. Sincronizar com o Android
+npx cap sync android
+
+# 3a. Gerar APK
+cd android
+./gradlew assembleRelease --no-daemon
+
+# 3b. Gerar AAB
+./gradlew bundleRelease --no-daemon
+```
+
+### Rodar com dois apps simultâneos (dev + release)
+
+Para instalar o APK de dev junto com o APK de produção sem conflito, mude o `applicationId` no [android/app/build.gradle](android/app/build.gradle) e o `appId` no [capacitor.config.ts](capacitor.config.ts):
+
+| Arquivo | Campo | Dev | Produção |
+|---|---|---|---|
+| `build.gradle` | `applicationId` | `"com.japaguei.dev"` | `"com.japaguei.app"` |
+| `capacitor.config.ts` | `appId` | `"com.japaguei.dev"` | `"com.japaguei.app"` |
+| `strings.xml` | `app_name` | `"Já Paguei Dev"` | `"Já Paguei"` |
+
+---
+
 ## 📱 Testar PWA
 
 Após fazer deploy:

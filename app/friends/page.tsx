@@ -4,6 +4,11 @@ import { useEffect, useState } from 'react'
 import { AppLayout } from '@/components/layout/app-layout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { useAuth } from '@/hooks/use-auth'
 import { fetchFriends, addFriend, acceptFriend, removeFriend } from '@/lib/supabase/database'
 import { UserPlus, Search, Check, X, Loader2, UserCheck, Clock } from 'lucide-react'
@@ -16,6 +21,7 @@ export default function FriendsPage() {
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
   const [actionId, setActionId] = useState<string | null>(null)
+  const [removeTarget, setRemoveTarget] = useState<string | null>(null)
 
   const loadFriends = () => {
     if (!user) return
@@ -57,8 +63,10 @@ export default function FriendsPage() {
     }
   }
 
-  const handleRemove = async (friendshipId: string) => {
-    if (!confirm('Remover este amigo?')) return
+  const handleRemove = async () => {
+    if (!removeTarget) return
+    const friendshipId = removeTarget
+    setRemoveTarget(null)
     setActionId(friendshipId)
     try {
       await removeFriend(friendshipId)
@@ -149,7 +157,7 @@ export default function FriendsPage() {
                           {actionId === f.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                         </button>
                         <button
-                          onClick={() => handleRemove(f.id)}
+                          onClick={() => setRemoveTarget(f.id)}
                           disabled={actionId === f.id}
                           className="p-2 rounded-xl hover:bg-destructive/10 text-destructive/60 transition-colors ios-press"
                         >
@@ -183,7 +191,7 @@ export default function FriendsPage() {
                       <div className="flex items-center gap-1">
                         <UserCheck className="w-4 h-4 text-emerald-500 mr-1" />
                         <button
-                          onClick={() => handleRemove(f.id)}
+                          onClick={() => setRemoveTarget(f.id)}
                           disabled={actionId === f.id}
                           className="p-2 rounded-xl hover:bg-destructive/10 text-destructive/60 hover:text-destructive transition-colors ios-press"
                         >
@@ -218,7 +226,7 @@ export default function FriendsPage() {
                         <Clock className="w-3.5 h-3.5 text-muted-foreground/40 mr-1" />
                         <span className="text-[11px] text-muted-foreground/60 mr-1">Pendente</span>
                         <button
-                          onClick={() => handleRemove(f.id)}
+                          onClick={() => setRemoveTarget(f.id)}
                           disabled={actionId === f.id}
                           className="p-2 rounded-xl hover:bg-destructive/10 text-destructive/60 transition-colors ios-press"
                         >
@@ -233,6 +241,26 @@ export default function FriendsPage() {
           </>
         )}
       </div>
+
+      <AlertDialog open={!!removeTarget} onOpenChange={(open) => !open && setRemoveTarget(null)}>
+        <AlertDialogContent className="rounded-2xl mx-4">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover amigo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você tem certeza? Esta pessoa não estará mais na sua lista de amigos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-[12px]">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRemove}
+              className="bg-destructive text-white rounded-[12px] hover:bg-destructive/90"
+            >
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   )
 }

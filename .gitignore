@@ -15,3 +15,14 @@ next.user-config.*
 node_modules/
 .next/
 .DS_Store
+
+# Capacitor build output
+out/
+
+# Android/iOS build artifacts (keep android/ source in git, ignore build outputs)
+android/build/
+android/app/build/
+android/.gradle/
+*.apk
+*.aab
+*.keystore

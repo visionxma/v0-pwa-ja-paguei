@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/use-auth'
-import { logout } from '@/app/auth/actions'
+import { logoutClient } from '@/lib/supabase/auth-client'
 import { useState } from 'react'
 
 export function Header() {
@@ -55,7 +55,7 @@ export function Header() {
                 </Link>
                 <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
                 <button
-                  onClick={() => logout()}
+                  onClick={() => logoutClient().then(() => { window.location.href = '/auth/login' })}
                   className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-gray-700"
                 >
                   Sair

@@ -3,6 +3,11 @@
 import { useEffect, useState } from 'react'
 import { AppLayout } from '@/components/layout/app-layout'
 import { Button } from '@/components/ui/button'
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { useAuth } from '@/hooks/use-auth'
 import { fetchBills, updateBillStatus, deleteBill } from '@/lib/supabase/database'
 import Link from 'next/link'
@@ -14,6 +19,7 @@ export default function BillsPage() {
   const [bills, setBills] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [actionId, setActionId] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
 
   const loadBills = () => {
     if (!user) return
@@ -39,13 +45,15 @@ export default function BillsPage() {
     }
   }
 
-  const handleDelete = async (billId: string) => {
-    if (!confirm('Tem certeza que deseja excluir esta despesa?')) return
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    const billId = deleteTarget
+    setDeleteTarget(null)
     setActionId(billId)
     try {
       await deleteBill(billId)
       setBills((prev) => prev.filter((b) => b.id !== billId))
-      toast.success('Despesa excluida')
+      toast.success('Despesa excluída')
     } catch {
       toast.error('Erro ao excluir despesa')
     } finally {
@@ -79,7 +87,7 @@ export default function BillsPage() {
               <Receipt className="w-7 h-7 text-muted-foreground" />
             </div>
             <p className="text-[16px] font-semibold text-foreground mb-1">Nenhuma despesa registrada</p>
-            <p className="text-[13px] text-muted-foreground mb-6">Crie sua primeira despesa clicando no botao acima</p>
+            <p className="text-[13px] text-muted-foreground mb-6">Crie sua primeira despesa clicando no botão acima</p>
             <Link href="/bills/new">
               <Button className="bg-primary text-white rounded-[14px] h-10 px-5 text-[14px] font-semibold ios-press shadow-md shadow-primary/15">
                 Criar Primeira Despesa
@@ -123,7 +131,7 @@ export default function BillsPage() {
                     )}
                   </button>
                   <button
-                    onClick={() => handleDelete(bill.id)}
+                    onClick={() => setDeleteTarget(bill.id)}
                     disabled={actionId === bill.id}
                     className="p-2 rounded-xl hover:bg-destructive/10 text-destructive/60 hover:text-destructive transition-colors ios-press"
                     title="Excluir"
@@ -136,6 +144,26 @@ export default function BillsPage() {
           </div>
         )}
       </div>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent className="rounded-2xl mx-4">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir despesa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. A despesa será removida permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-[12px]">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-white rounded-[12px] hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   )
 }

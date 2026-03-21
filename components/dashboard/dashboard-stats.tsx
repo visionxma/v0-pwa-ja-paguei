@@ -18,18 +18,18 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
   ]
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+    <div className="grid grid-cols-3 gap-2 sm:gap-3">
       {statItems.map((stat, index) => {
         const Icon = stat.icon
         return (
-          <div key={index} className="ios-card ios-card-hover p-5 group">
-            <div className="flex items-start justify-between">
-              <div className="space-y-1.5">
-                <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-[0.08em]">{stat.label}</p>
-                <p className="text-[22px] font-bold text-foreground tracking-tight leading-none">{stat.value}</p>
+          <div key={index} className="ios-card ios-card-hover p-3 sm:p-5 group">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div className="space-y-1">
+                <p className="text-[9px] sm:text-[11px] text-muted-foreground font-semibold uppercase tracking-[0.06em] leading-tight">{stat.label}</p>
+                <p className="text-[15px] sm:text-[22px] font-bold text-foreground tracking-tight leading-none">{stat.value}</p>
               </div>
-              <div className={`w-11 h-11 rounded-[14px] flex items-center justify-center ${stat.bg} ${stat.color} transition-transform duration-500 group-hover:scale-110`}>
-                <Icon className="w-5 h-5" />
+              <div className={`w-8 h-8 sm:w-11 sm:h-11 rounded-[10px] sm:rounded-[14px] flex items-center justify-center shrink-0 ${stat.bg} ${stat.color} transition-transform duration-500 group-hover:scale-110`}>
+                <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
             </div>
           </div>

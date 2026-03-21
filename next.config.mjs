@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
+const isCapacitor = process.env.BUILD_TARGET === 'capacitor'
+
 const nextConfig = {
+  // Static export for Capacitor (Android/iOS), SSR for web
+  ...(isCapacitor && { output: 'export', trailingSlash: true }),
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -9,6 +13,7 @@ const nextConfig = {
   // reactCompiler disabled — causes Turbopack crash on Windows
   // reactCompiler: true,
   headers: async () => {
+    if (isCapacitor) return []
     return [
       {
         source: '/sw.js',

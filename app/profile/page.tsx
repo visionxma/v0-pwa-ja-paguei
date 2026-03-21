@@ -31,7 +31,7 @@ export default function ProfilePage() {
     setSavingProfile(true)
     try {
       await updateProfile(user.id, { display_name: newName.trim() })
-      toast.success('Perfil atualizado! Recarregue para ver a mudanca.')
+      toast.success('Perfil atualizado! Recarregue para ver a mudança.')
       setEditOpen(false)
     } catch (err: any) {
       toast.error(err?.message || 'Erro ao salvar perfil')
@@ -46,7 +46,7 @@ export default function ProfilePage() {
       return
     }
     if (newPassword !== confirmPassword) {
-      toast.error('As senhas nao conferem')
+      toast.error('As senhas não conferem')
       return
     }
     setSavingPassword(true)
@@ -77,14 +77,14 @@ export default function ProfilePage() {
             <p className="text-[18px] font-bold text-foreground leading-tight">{displayName}</p>
             <p className="text-[14px] text-muted-foreground mt-0.5">{user?.email}</p>
             <p className="text-[12px] text-muted-foreground/60 mt-1">
-              Membro desde {new Date(user?.created_at || '').toLocaleDateString('pt-BR')}
+              Membro desde {new Date(user?.created_at || '').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
             </p>
           </div>
         </div>
 
         {/* Info */}
         <div>
-          <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-[0.08em] mb-2 ml-4">Informacoes</p>
+          <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-[0.08em] mb-2 ml-4">Informações</p>
           <div className="ios-group">
             <div className="ios-group-item">
               <span className="text-[13px] text-muted-foreground">Nome</span>
@@ -99,7 +99,7 @@ export default function ProfilePage() {
 
         {/* Actions */}
         <div>
-          <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-[0.08em] mb-2 ml-4">Acoes</p>
+          <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-[0.08em] mb-2 ml-4">Ações</p>
           <div className="ios-group">
             <button
               onClick={() => { setEditOpen(!editOpen); setPasswordOpen(false) }}
@@ -117,7 +117,7 @@ export default function ProfilePage() {
             {editOpen && (
               <div className="px-5 py-4 space-y-3 bg-muted/20">
                 <div className="space-y-1.5">
-                  <Label className="text-[13px] font-medium">Nome de Exibicao</Label>
+                  <Label className="text-[13px] font-medium">Nome de Exibição</Label>
                   <Input
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
@@ -162,7 +162,7 @@ export default function ProfilePage() {
                       type={showPassword ? 'text' : 'password'}
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Minimo 6 caracteres"
+                      placeholder="Mínimo 6 caracteres"
                       className="h-[42px] rounded-[12px] bg-background border-border/50 text-[15px] pr-10"
                     />
                     <button

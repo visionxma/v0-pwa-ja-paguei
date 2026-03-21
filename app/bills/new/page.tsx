@@ -39,7 +39,7 @@ export default function NewBillPage() {
     if (!user) return
 
     if (!description.trim() || !amount) {
-      toast.error('Preencha a descricao e o valor')
+      toast.error('Preencha a descrição e o valor')
       return
     }
 
@@ -86,7 +86,7 @@ export default function NewBillPage() {
         <div className="ios-card p-6">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-1.5">
-              <Label className="text-[13px] font-medium">Descricao</Label>
+              <Label className="text-[13px] font-medium">Descrição</Label>
               <div className="relative group">
                 <FileText className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 transition-colors group-focus-within:text-primary" />
                 <Input
@@ -108,6 +108,7 @@ export default function NewBillPage() {
                     type="number"
                     step="0.01"
                     min="0.01"
+                    inputMode="decimal"
                     placeholder="0.00"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
@@ -167,7 +168,7 @@ export default function NewBillPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-[13px] font-medium">Recorrencia</Label>
+              <Label className="text-[13px] font-medium">Recorrência</Label>
               <div className="relative group">
                 <Repeat className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 pointer-events-none" />
                 <select
@@ -183,9 +184,9 @@ export default function NewBillPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-[13px] font-medium">Observacoes</Label>
+              <Label className="text-[13px] font-medium">Observações</Label>
               <textarea
-                placeholder="Observacoes opcionais..."
+                placeholder="Observações opcionais..."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={2}

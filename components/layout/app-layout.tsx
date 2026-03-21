@@ -20,7 +20,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-background gap-5">
+      <div className="app-root flex flex-col items-center justify-center bg-background gap-5">
         <div className="w-16 h-16 rounded-[20px] bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-2xl shadow-primary/20 glow-pulse">
           <DollarSign className="w-8 h-8 text-white" />
         </div>
@@ -36,19 +36,24 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   if (!user) return null
 
   return (
-    <div className="flex h-screen bg-background">
-      <AppSidebar />
+    <div className="app-root bg-background">
+      <div className="flex flex-1 min-h-0">
+        <AppSidebar />
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <AppHeader />
+        <div className="flex-1 flex flex-col min-w-0">
+          <AppHeader />
 
-        <main className="flex-1 overflow-y-auto pb-24 md:pb-0 ios-scroll">
-          <div className="max-w-5xl mx-auto p-4 md:p-6 lg:p-8">
-            {children}
-          </div>
-        </main>
+          <main
+            className="flex-1 overflow-y-auto ios-scroll"
+            style={{ paddingBottom: 'calc(6rem + env(safe-area-inset-bottom, 0px))' }}
+          >
+            <div className="max-w-5xl mx-auto p-4 md:p-6 lg:p-8 md:pb-6">
+              {children}
+            </div>
+          </main>
 
-        <BottomNav />
+          <BottomNav />
+        </div>
       </div>
     </div>
   )

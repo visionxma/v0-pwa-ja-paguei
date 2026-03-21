@@ -33,8 +33,8 @@ export default function HistoryPage() {
     <AppLayout>
       <div className="space-y-5 ios-stagger">
         <div>
-          <h1 className="text-[22px] font-bold text-foreground tracking-tight">Historico</h1>
-          <p className="text-[13px] text-muted-foreground mt-0.5">Todas as suas transacoes</p>
+          <h1 className="text-[22px] font-bold text-foreground tracking-tight">Histórico</h1>
+          <p className="text-[13px] text-muted-foreground mt-0.5">Todas as suas transações</p>
         </div>
 
         {/* iOS Segmented Control */}
@@ -66,7 +66,7 @@ export default function HistoryPage() {
             <p className="text-[16px] font-semibold text-foreground mb-1">Nenhuma transacao</p>
             <p className="text-[13px] text-muted-foreground">
               {filter === 'all'
-                ? 'Suas transacoes aparecerao aqui'
+                ? 'Suas transações aparecerão aqui'
                 : filter === 'paid'
                 ? 'Nenhuma despesa paga'
                 : 'Nenhuma despesa pendente'}

@@ -3,6 +3,11 @@
 import { useEffect, useState } from 'react'
 import { AppLayout } from '@/components/layout/app-layout'
 import { Button } from '@/components/ui/button'
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { useAuth } from '@/hooks/use-auth'
 import { fetchGroups, deleteGroup } from '@/lib/supabase/database'
 import Link from 'next/link'
@@ -14,6 +19,7 @@ export default function GroupsPage() {
   const [groups, setGroups] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user) return
@@ -23,13 +29,15 @@ export default function GroupsPage() {
       .finally(() => setLoading(false))
   }, [user])
 
-  const handleDelete = async (groupId: string) => {
-    if (!confirm('Tem certeza que deseja excluir este grupo?')) return
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    const groupId = deleteTarget
+    setDeleteTarget(null)
     setDeletingId(groupId)
     try {
       await deleteGroup(groupId)
       setGroups((prev) => prev.filter((g) => g.id !== groupId))
-      toast.success('Grupo excluido')
+      toast.success('Grupo excluído')
     } catch {
       toast.error('Erro ao excluir grupo')
     } finally {
@@ -63,7 +71,7 @@ export default function GroupsPage() {
               <Users className="w-7 h-7 text-muted-foreground" />
             </div>
             <p className="text-[16px] font-semibold text-foreground mb-1">Nenhum grupo criado</p>
-            <p className="text-[13px] text-muted-foreground mb-6">Crie um grupo para dividir despesas</p>
+            <p className="text-[13px] text-muted-foreground mb-6">Crie um grupo para dividir despesas entre amigos</p>
             <Link href="/groups/new">
               <Button className="bg-primary text-white rounded-[14px] h-10 px-5 text-[14px] font-semibold ios-press shadow-md shadow-primary/15">
                 Criar Primeiro Grupo
@@ -90,7 +98,7 @@ export default function GroupsPage() {
                 </div>
                 {group.role === 'admin' && (
                   <button
-                    onClick={() => handleDelete(group.id)}
+                    onClick={() => setDeleteTarget(group.id)}
                     disabled={deletingId === group.id}
                     className="p-2 rounded-xl hover:bg-destructive/10 text-destructive/60 hover:text-destructive transition-colors ios-press"
                     title="Excluir grupo"
@@ -107,6 +115,26 @@ export default function GroupsPage() {
           </div>
         )}
       </div>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent className="rounded-2xl mx-4">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir grupo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. O grupo e todos os seus dados serão removidos permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-[12px]">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-white rounded-[12px] hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   )
 }

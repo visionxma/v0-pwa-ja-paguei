@@ -19,8 +19,8 @@ export default function RootPage() {
   }, [user, loading, router])
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+    <div className="app-root flex items-center justify-center bg-background">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
     </div>
   )
 }

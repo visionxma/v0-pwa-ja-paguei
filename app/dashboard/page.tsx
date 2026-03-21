@@ -65,7 +65,7 @@ export default function DashboardPage() {
               </div>
               
               <h1 className="text-[22px] md:text-[26px] font-bold tracking-tight leading-none mb-2 drop-shadow-sm">
-                Ola, {displayName}
+                Olá, {displayName}
               </h1>
               <p className="text-white/85 text-[13.5px] md:text-[14px] max-w-sm leading-relaxed drop-shadow-sm">
                 Gerencie despesas e divida contas com amigos.

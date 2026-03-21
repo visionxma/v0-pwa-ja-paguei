@@ -38,7 +38,7 @@ export function RecentBills() {
           <Inbox className="w-6 h-6 text-muted-foreground" />
         </div>
         <p className="text-foreground font-semibold text-[15px] mb-0.5">Nenhuma despesa recente</p>
-        <p className="text-[13px] text-muted-foreground">Crie sua primeira despesa para comecar</p>
+        <p className="text-[13px] text-muted-foreground">Crie sua primeira despesa para começar</p>
       </div>
     )
   }

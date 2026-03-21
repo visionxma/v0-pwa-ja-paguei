@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useAuth } from '@/hooks/use-auth'
-import { logout } from '@/app/auth/actions'
+import { logoutClient } from '@/lib/supabase/auth-client'
 import { useState } from 'react'
 import { DollarSign, LogOut, User, Settings, Menu, X, ChevronRight } from 'lucide-react'
 import { usePathname } from 'next/navigation'
@@ -13,15 +13,16 @@ import {
   UserPlus,
   History,
 } from 'lucide-react'
+import { SyncIndicator } from '@/components/sync-indicator'
 
 const mobileNavItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/bills', label: 'Despesas', icon: Receipt },
   { href: '/groups', label: 'Grupos', icon: Users },
   { href: '/friends', label: 'Amigos', icon: UserPlus },
-  { href: '/history', label: 'Historico', icon: History },
+  { href: '/history', label: 'Histórico', icon: History },
   { href: '/profile', label: 'Perfil', icon: User },
-  { href: '/settings', label: 'Configuracoes', icon: Settings },
+  { href: '/settings', label: 'Configurações', icon: Settings },
 ]
 
 export function AppHeader() {
@@ -47,7 +48,7 @@ export function AppHeader() {
               <div className="w-7 h-7 rounded-[8px] bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
                 <DollarSign className="w-3.5 h-3.5 text-white" />
               </div>
-              <span className="font-semibold text-[16px] text-foreground">Ja Paguei</span>
+              <span className="font-semibold text-[16px] text-foreground">Já Paguei</span>
             </Link>
 
             <span className="hidden md:block text-[14px] text-muted-foreground">
@@ -55,52 +56,56 @@ export function AppHeader() {
             </span>
           </div>
 
-          <div className="relative">
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/60 text-white flex items-center justify-center font-semibold text-[12px] shadow-md shadow-primary/15 hover:shadow-primary/30 transition-all duration-500 ios-press"
-            >
-              {displayName.charAt(0).toUpperCase()}
-            </button>
+          <div className="flex items-center gap-2">
+            <SyncIndicator />
 
-            {showMenu && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-                <div className="absolute right-0 mt-2.5 w-56 ios-glass-thick rounded-2xl shadow-xl shadow-black/10 dark:shadow-black/30 border border-border/30 py-1.5 z-50 ios-scale-in overflow-hidden">
-                  <div className="px-4 py-2.5 mb-1">
-                    <p className="text-[14px] font-semibold text-foreground truncate">{displayName}</p>
-                    <p className="text-[12px] text-muted-foreground truncate">{user?.email}</p>
+            <div className="relative">
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/60 text-white flex items-center justify-center font-semibold text-[12px] shadow-md shadow-primary/15 hover:shadow-primary/30 transition-all duration-500 ios-press"
+              >
+                {displayName.charAt(0).toUpperCase()}
+              </button>
+
+              {showMenu && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
+                  <div className="absolute right-0 mt-2.5 w-56 ios-glass-thick rounded-2xl shadow-xl shadow-black/10 dark:shadow-black/30 border border-border/30 py-1.5 z-50 ios-scale-in overflow-hidden">
+                    <div className="px-4 py-2.5 mb-1">
+                      <p className="text-[14px] font-semibold text-foreground truncate">{displayName}</p>
+                      <p className="text-[12px] text-muted-foreground truncate">{user?.email}</p>
+                    </div>
+                    <div className="mx-3 h-px bg-border/50" />
+                    <Link
+                      href="/profile"
+                      onClick={() => setShowMenu(false)}
+                      className="flex items-center gap-3 mx-1.5 mt-1.5 px-3 py-2 text-[14px] text-foreground hover:bg-foreground/5 rounded-xl transition-colors"
+                    >
+                      <User className="w-4 h-4 text-muted-foreground" />
+                      <span className="flex-1">Meu Perfil</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40" />
+                    </Link>
+                    <Link
+                      href="/settings"
+                      onClick={() => setShowMenu(false)}
+                      className="flex items-center gap-3 mx-1.5 px-3 py-2 text-[14px] text-foreground hover:bg-foreground/5 rounded-xl transition-colors"
+                    >
+                      <Settings className="w-4 h-4 text-muted-foreground" />
+                      <span className="flex-1">Configurações</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40" />
+                    </Link>
+                    <div className="mx-3 my-1.5 h-px bg-border/50" />
+                    <button
+                      onClick={() => logoutClient().then(() => { window.location.href = '/auth/login' })}
+                      className="flex items-center gap-3 mx-1.5 mb-1 px-3 py-2 text-[14px] text-destructive hover:bg-destructive/5 rounded-xl transition-colors w-[calc(100%-12px)]"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sair
+                    </button>
                   </div>
-                  <div className="mx-3 h-px bg-border/50" />
-                  <Link
-                    href="/profile"
-                    onClick={() => setShowMenu(false)}
-                    className="flex items-center gap-3 mx-1.5 mt-1.5 px-3 py-2 text-[14px] text-foreground hover:bg-foreground/5 rounded-xl transition-colors"
-                  >
-                    <User className="w-4 h-4 text-muted-foreground" />
-                    <span className="flex-1">Meu Perfil</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40" />
-                  </Link>
-                  <Link
-                    href="/settings"
-                    onClick={() => setShowMenu(false)}
-                    className="flex items-center gap-3 mx-1.5 px-3 py-2 text-[14px] text-foreground hover:bg-foreground/5 rounded-xl transition-colors"
-                  >
-                    <Settings className="w-4 h-4 text-muted-foreground" />
-                    <span className="flex-1">Configuracoes</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40" />
-                  </Link>
-                  <div className="mx-3 my-1.5 h-px bg-border/50" />
-                  <button
-                    onClick={() => logout()}
-                    className="flex items-center gap-3 mx-1.5 mb-1 px-3 py-2 text-[14px] text-destructive hover:bg-destructive/5 rounded-xl transition-colors w-[calc(100%-12px)]"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Sair
-                  </button>
-                </div>
-              </>
-            )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -121,7 +126,7 @@ export function AppHeader() {
                 <div className="w-9 h-9 rounded-[12px] bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg shadow-primary/20">
                   <DollarSign className="w-4 h-4 text-white" />
                 </div>
-                <span className="font-semibold text-[16px] text-sidebar-foreground">Ja Paguei</span>
+                <span className="font-semibold text-[16px] text-sidebar-foreground">Já Paguei</span>
               </div>
               <button
                 onClick={() => setMobileOpen(false)}
@@ -169,7 +174,7 @@ export function AppHeader() {
                 </div>
               </div>
               <button
-                onClick={() => logout()}
+                onClick={() => logoutClient().then(() => { window.location.href = '/auth/login' })}
                 className="flex items-center gap-2.5 w-full mt-2 px-3 py-2 rounded-[12px] text-[13px] text-sidebar-foreground/40 hover:bg-red-500/10 hover:text-red-400 transition-all duration-300 ios-press"
               >
                 <LogOut className="w-4 h-4" />

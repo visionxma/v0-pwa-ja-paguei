@@ -1,90 +1,125 @@
-const CACHE_NAME = 'ja-paguei-v1'
-const URLS_TO_CACHE = [
+const CACHE_VERSION = 'v2'
+const CACHE_STATIC = `ja-paguei-static-${CACHE_VERSION}`
+const CACHE_PAGES = `ja-paguei-pages-${CACHE_VERSION}`
+const CACHE_API = `ja-paguei-api-${CACHE_VERSION}`
+
+const APP_ROUTES = [
   '/',
   '/dashboard',
+  '/bills',
+  '/bills/new',
+  '/groups',
+  '/groups/new',
+  '/friends',
+  '/history',
+  '/profile',
+  '/settings',
   '/auth/login',
   '/auth/sign-up',
-  '/offline.html',
+  '/offline',
 ]
 
-// Install Service Worker
+// Install — pre-cache all app pages
 self.addEventListener('install', (event) => {
-  self.skipWaiting() // Força a ativação imediata da nova versão
+  self.skipWaiting()
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(URLS_TO_CACHE)
-    })
+    caches.open(CACHE_PAGES).then((cache) =>
+      cache.addAll(APP_ROUTES).catch(() => {})
+    )
   )
 })
 
-// Activate Service Worker
+// Activate — remove old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     Promise.all([
-      // Limpa caches antigos
-      caches.keys().then((cacheNames) => {
-        return Promise.all(
-          cacheNames.map((cacheName) => {
-            if (cacheName !== CACHE_NAME) {
-              return caches.delete(cacheName)
-            }
-          })
+      caches.keys().then((keys) =>
+        Promise.all(
+          keys
+            .filter((k) => k !== CACHE_STATIC && k !== CACHE_PAGES && k !== CACHE_API)
+            .map((k) => caches.delete(k))
         )
-      }),
-      // Assume o controle imediatamente de todas as abas abertas
-      self.clients.claim()
+      ),
+      self.clients.claim(),
     ])
   )
 })
 
-// Fetch Event
+// Fetch strategy
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') {
+  const { request } = event
+  if (request.method !== 'GET') return
+
+  const url = new URL(request.url)
+
+  // Supabase API calls — Network first, fallback to cache (shows last known data)
+  if (url.hostname.includes('supabase.co')) {
+    event.respondWith(networkFirstWithCache(request, CACHE_API))
     return
   }
 
-  const url = new URL(event.request.url)
-  
-  // Estrategia Network-First para a home, dashboard e rotas de app
-  // Isso garante que se houver internet, ele pegue a versao nova do deploy (GitHub)
-  const isAppRoute = URLS_TO_CACHE.some(route => url.pathname === route || url.pathname.startsWith(route + '/'))
-
-  if (isAppRoute) {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          const responseToCache = response.clone()
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache)
-          })
-          return response
-        })
-        .catch(() => {
-          return caches.match(event.request)
-        })
-    )
+  // Next.js static assets (_next/static) — Cache first, always reliable
+  if (url.pathname.startsWith('/_next/static/')) {
+    event.respondWith(cacheFirstWithNetwork(request, CACHE_STATIC))
     return
   }
 
-  // Cache-First para outros assets (JS, CSS, Imagens) que o Next.js ja controla com hashes
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      if (response) return response
+  // App pages — Network first, fallback to cached page, then offline page
+  const isAppPage = !url.pathname.includes('.') || url.pathname.endsWith('/')
+  if (isAppPage) {
+    event.respondWith(networkFirstWithCache(request, CACHE_PAGES))
+    return
+  }
 
-      return fetch(event.request).then((response) => {
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-          return response
-        }
+  // Other static files (icons, images) — Cache first
+  event.respondWith(cacheFirstWithNetwork(request, CACHE_STATIC))
+})
 
-        const responseToCache = response.clone()
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache)
-        })
+async function networkFirstWithCache(request, cacheName) {
+  const cache = await caches.open(cacheName)
+  try {
+    const response = await fetch(request)
+    if (response.ok) {
+      cache.put(request, response.clone())
+    }
+    return response
+  } catch {
+    const cached = await cache.match(request)
+    if (cached) return cached
+    // Fallback offline page for navigation requests
+    if (request.mode === 'navigate') {
+      const offlinePage = await caches.match('/offline')
+      if (offlinePage) return offlinePage
+    }
+    return new Response('Sem conexão', { status: 503, statusText: 'Offline' })
+  }
+}
 
-        return response
+async function cacheFirstWithNetwork(request, cacheName) {
+  const cached = await caches.match(request)
+  if (cached) return cached
+
+  const cache = await caches.open(cacheName)
+  try {
+    const response = await fetch(request)
+    if (response.ok) {
+      cache.put(request, response.clone())
+    }
+    return response
+  } catch {
+    return new Response('Sem conexão', { status: 503, statusText: 'Offline' })
+  }
+}
+
+// Background Sync — dispara quando o dispositivo volta a ter internet
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'ja-paguei-sync') {
+    event.waitUntil(
+      self.clients.matchAll().then((clients) => {
+        clients.forEach(client => client.postMessage({ type: 'SW_SYNC' }))
       })
-    })
-  )
+    )
+  }
 })
 
 // Push notifications
@@ -96,24 +131,17 @@ self.addEventListener('push', (event) => {
     tag: 'notification',
     requireInteraction: false,
   }
-
   event.waitUntil(self.registration.showNotification('Já Paguei', options))
 })
 
-// Notification click
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
   event.waitUntil(
     clients.matchAll({ type: 'window' }).then((clientList) => {
-      for (let i = 0; i < clientList.length; i++) {
-        const client = clientList[i]
-        if (client.url === '/' && 'focus' in client) {
-          return client.focus()
-        }
+      for (const client of clientList) {
+        if ('focus' in client) return client.focus()
       }
-      if (clients.openWindow) {
-        return clients.openWindow('/')
-      }
+      if (clients.openWindow) return clients.openWindow('/dashboard')
     })
   )
 })

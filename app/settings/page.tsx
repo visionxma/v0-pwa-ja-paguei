@@ -66,9 +66,9 @@ export default function SettingsPage() {
     try {
       await updatePreferences(user.id, { [key]: value })
       setPrefs((prev: any) => prev ? { ...prev, [key]: value } : prev)
-      toast.success('Preferencia salva')
+      toast.success('Preferência salva')
     } catch {
-      toast.error('Erro ao salvar preferencia')
+      toast.error('Erro ao salvar preferência')
     } finally {
       setSavingPrefs(false)
     }
@@ -80,7 +80,7 @@ export default function SettingsPage() {
       return
     }
     if (newPassword !== confirmPassword) {
-      toast.error('As senhas nao conferem')
+      toast.error('As senhas não conferem')
       return
     }
     setSavingPassword(true)
@@ -99,13 +99,13 @@ export default function SettingsPage() {
 
   const handleDeleteAccount = async () => {
     if (deleteConfirm !== 'DELETAR') {
-      toast.error('Digite DELETAR para confirmar')
+      toast.error('Digite DELETAR para confirmar a exclusão')
       return
     }
     setDeleting(true)
     try {
       await deleteAccount()
-      toast.success('Conta desativada. Voce sera redirecionado.')
+      toast.success('Conta desativada. Você será redirecionado.')
       router.push('/auth/login')
     } catch (err: any) {
       toast.error(err?.message || 'Erro ao deletar conta')
@@ -123,11 +123,11 @@ export default function SettingsPage() {
   return (
     <AppLayout>
       <div className="space-y-6 max-w-2xl ios-stagger">
-        <h1 className="text-[22px] font-bold text-foreground tracking-tight">Configuracoes</h1>
+        <h1 className="text-[22px] font-bold text-foreground tracking-tight">Configurações</h1>
 
         {/* Appearance */}
         <div>
-          <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-[0.08em] mb-2 ml-4">Aparencia</p>
+          <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-[0.08em] mb-2 ml-4">Aparência</p>
           <div className="ios-group">
             <div className="ios-group-item">
               <div className="flex items-center gap-3">
@@ -143,7 +143,7 @@ export default function SettingsPage() {
 
         {/* Notifications */}
         <div>
-          <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-[0.08em] mb-2 ml-4">Notificacoes</p>
+          <p className="text-[12px] font-semibold text-muted-foreground uppercase tracking-[0.08em] mb-2 ml-4">Notificações</p>
           <div className="ios-group">
             {notifItems.map((item) => {
               const Icon = item.icon
@@ -189,7 +189,7 @@ export default function SettingsPage() {
                       type={showPassword ? 'text' : 'password'}
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Minimo 6 caracteres"
+                      placeholder="Mínimo 6 caracteres"
                       className="h-[42px] rounded-[12px] bg-background border-border/50 text-[15px] pr-10"
                     />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
